@@ -55,7 +55,7 @@ class _AudioRecorderState extends State<AudioRecorder> {
 
   Future<void> init() async {
 
-    _controller = VideoPlayerController.file(File(filePath));
+/*     _controller = VideoPlayerController.file(File(filePath));
     
     await _controller.initialize();
 
@@ -67,7 +67,7 @@ class _AudioRecorderState extends State<AudioRecorder> {
         looping: false,
         
       );
-    });
+    }); */
 
     PermissionStatus status =  await Permission.microphone.request();
     if(status != PermissionStatus.granted) {
@@ -210,7 +210,8 @@ class _AudioRecorderState extends State<AudioRecorder> {
       _recorderSubscription = null;
     }
 
-/*     _controller = VideoPlayerController.file(File(filePath));
+    _controller = VideoPlayerController.network(
+    'https://flutter.github.io/assets-for-api-docs/assets/videos/butterfly.mp4');// VideoPlayerController.file(File(filePath));
     
     await _controller.initialize();
 
@@ -222,10 +223,12 @@ class _AudioRecorderState extends State<AudioRecorder> {
         looping: false,
         
       );
-    }); */
+    });
 
 
-
+    _chewieController!.addListener(() { 
+      print('chewie listener');  
+    });
 
 
     return anURL;//await _myRecorder!.stopRecorder();
