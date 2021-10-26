@@ -55,18 +55,19 @@ class _AudioRecorderState extends State<AudioRecorder> {
 
   Future<void> init() async {
 
-/*     _controller = VideoPlayerController.file(File(filePath));
+    _controller = VideoPlayerController.file(File(filePath));
     
-
+    await _controller.initialize();
 
     setState(() {
       _chewieController = ChewieAudioController(
         videoPlayerController: _controller,
         autoInitialize: true,
-        autoPlay: true,
+        autoPlay: false,
         looping: false,
+        
       );
-    }); */
+    });
 
     PermissionStatus status =  await Permission.microphone.request();
     if(status != PermissionStatus.granted) {
@@ -151,8 +152,7 @@ class _AudioRecorderState extends State<AudioRecorder> {
           ),
 
         )
-
-      
+    
       
       ,
     );
@@ -164,7 +164,12 @@ class _AudioRecorderState extends State<AudioRecorder> {
     if (!dir.existsSync()) {
       dir.createSync();
     }
-    _myRecorder!.openAudioSession();
+    _myRecorder!.openAudioSession(
+        focus: AudioFocus.requestFocusAndStopOthers,
+        category: SessionCategory.playAndRecord,
+        mode: SessionMode.modeDefault,
+        device: AudioDevice.speaker 
+    );
 
     await _myRecorder!.startRecorder(
       toFile: filePath,
@@ -189,7 +194,7 @@ class _AudioRecorderState extends State<AudioRecorder> {
     });
     
 
-    
+
     //_recorderSubscription.cancel();
   }  
 
@@ -197,7 +202,15 @@ class _AudioRecorderState extends State<AudioRecorder> {
     _myRecorder!.closeAudioSession();
     //_recorderSubscription!.cancel();
 
-    _controller = VideoPlayerController.file(File(filePath));
+
+    String? anURL = await _myRecorder!.stopRecorder();
+    if (_recorderSubscription != null)
+    {
+      _recorderSubscription!.cancel();
+      _recorderSubscription = null;
+    }
+
+/*     _controller = VideoPlayerController.file(File(filePath));
     
     await _controller.initialize();
 
@@ -209,15 +222,10 @@ class _AudioRecorderState extends State<AudioRecorder> {
         looping: false,
         
       );
-    });
+    }); */
 
 
-    String? anURL = await _myRecorder!.stopRecorder();
-    if (_recorderSubscription != null)
-    {
-            _recorderSubscription!.cancel();
-            _recorderSubscription = null;
-    }
+
 
 
     return anURL;//await _myRecorder!.stopRecorder();
