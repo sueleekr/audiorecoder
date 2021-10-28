@@ -1,5 +1,5 @@
 import 'dart:ui';
-
+import 'dart:math';
 import 'package:flutter/material.dart';
 
 class SoundWave extends StatefulWidget {
@@ -22,7 +22,6 @@ class _SoundWaveState extends State<SoundWave> with SingleTickerProviderStateMix
 
   double end_length = 0;              // animation end
 
-
   late final _animationController = AnimationController(
     vsync: this,
     duration: Duration(milliseconds: widget.activate?ANIMATION_SPEED.toInt():0)
@@ -31,14 +30,11 @@ class _SoundWaveState extends State<SoundWave> with SingleTickerProviderStateMix
   @override
   void initState() {
     super.initState();
-
     widget.activate?_animationController.repeat():_animationController.stop();
   }
 
-
   @override
   void dispose() {
-
     _animationController.dispose();
     super.dispose();
   }
@@ -52,26 +48,25 @@ class _SoundWaveState extends State<SoundWave> with SingleTickerProviderStateMix
     late Color _color;
 
     if(widget.activate){
-        startHeight = (startHeight < MIN_HEIGHT)?MIN_HEIGHT:startHeight;
-        endHeight =  (endHeight < MIN_HEIGHT)?MIN_HEIGHT:endHeight;
-        _color = widget.color;
+      startHeight = (startHeight < MIN_HEIGHT)?MIN_HEIGHT:startHeight;
+      endHeight =  (endHeight < MIN_HEIGHT)?MIN_HEIGHT:endHeight;
+      _color = widget.color;
     }
     else{
-        _color = Colors.grey;
+      _color = Colors.grey;
     }
 
     _animationController.duration =  Duration(milliseconds: widget.activate?ANIMATION_SPEED.toInt():0);
-  widget.activate?_animationController.repeat():_animationController.stop();
-
+    widget.activate?_animationController.repeat():_animationController.stop();
 
     return AnimatedBuilder(
         animation: _animationController, 
-        
         builder: (context, child){
+          var randomMultiplier = Random();      //random value for the height
           double currentHeight = widget.height;
           if(widget.activate)
             currentHeight = lerpDouble(startHeight, endHeight, _animationController.value)??MIN_HEIGHT;
-          print('animation controller value -> ${_animationController.value}');
+
           return Container(
             height: widget.height,
             width: widget.width,
@@ -82,17 +77,17 @@ class _SoundWaveState extends State<SoundWave> with SingleTickerProviderStateMix
                 Container(
                   color: _color,
                   width: 5, 
-                  height: currentHeight*0.25,
+                  height: currentHeight*0.25*(1 - randomGenerator(randomMultiplier.nextDouble(),widget.activate)),
                 ),
                 Container(
                   color: _color,
                   width: 5, 
-                  height: currentHeight*0.5,
+                  height: currentHeight*0.5*(1 - randomGenerator(randomMultiplier.nextDouble(),widget.activate)),
                 ),
                 Container(
                   color: _color,
                   width: 5, 
-                  height: currentHeight*0.75,
+                  height: currentHeight*0.75*(1 - randomGenerator(randomMultiplier.nextDouble(),widget.activate)),
                 ),
                 Container(
                   color: _color,
@@ -102,17 +97,17 @@ class _SoundWaveState extends State<SoundWave> with SingleTickerProviderStateMix
                 Container(
                   color: _color,
                   width: 5, 
-                  height: currentHeight*0.75,
+                  height: currentHeight*0.75*(1 - randomGenerator(randomMultiplier.nextDouble(),widget.activate)),
                 ),
                 Container(
                   color: _color,
                   width: 5, 
-                  height: currentHeight*0.5,
+                  height: currentHeight*0.5*(1 - randomGenerator(randomMultiplier.nextDouble(),widget.activate)),
                 ),
                 Container(
                   color: _color,
                   width: 5, 
-                  height: currentHeight*0.25,
+                  height: currentHeight*0.25*(1 - randomGenerator(randomMultiplier.nextDouble(),widget.activate)),
                 ),
               ],
             ),
@@ -121,28 +116,17 @@ class _SoundWaveState extends State<SoundWave> with SingleTickerProviderStateMix
         }
     );
   }
-}
 
-/* 
-class DecibelBar extends StatefulWidget {
-  DecibelBar({Key? key, required this.height, required this.color, required this.activate}) : super(key: key);
+  double randomGenerator(double random, bool activate){
+    double returnValue;
 
-  final int height;
-  final Color color;
-  final bool activate;
-
-  @override
-  _DecibelBarState createState() => _DecibelBarState();
-}
-
-class _DecibelBarState extends State<DecibelBar> {
-  @override
-  Widget build(BuildContext context) {
-    return 
-      Container(
-        color: widget.activate?widget.color : Colors.grey,
-        width: 5, 
-        height: 40,
-      );
+    if(activate){
+      returnValue = lerpDouble(-0.5,0.5, random)??0;
+      returnValue = double.parse(returnValue.toStringAsFixed(2));
+    }
+    else{
+      returnValue = 0.0;
+    }
+    return returnValue;
   }
-} */
+}

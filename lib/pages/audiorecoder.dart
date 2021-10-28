@@ -1,6 +1,4 @@
 
-// ignore_for_file: avoid_print
-
 import 'dart:async';
 import 'dart:io';
 import 'package:audiorecoder/widgets/soundwave.dart';
@@ -9,7 +7,6 @@ import 'package:intl/intl.dart' show DateFormat;
 import 'package:path/path.dart' as path;
 
 import 'package:audiorecoder/widgets/recordingbutton.dart';
-import 'package:audiorecoder/widgets/timerview.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_sound/flutter_sound.dart';
 import 'package:chewie_audio/chewie_audio.dart';
@@ -36,7 +33,6 @@ class _AudioRecorderState extends State<AudioRecorder> {
   String _recorderTxt = '00:00';
   //bool _on = false;   //only if using timer widget
   double _decibel = 0.0;
-  TimerViewController timerController = TimerViewController();
   FlutterSoundRecorder? _myRecorder;
   StreamSubscription? _recorderSubscription;
 
@@ -52,14 +48,11 @@ class _AudioRecorderState extends State<AudioRecorder> {
     _myRecorder = FlutterSoundRecorder();
 
     init().then((value) {
-      _myRecorder!.openAudioSession().then((value) {
-
-      });
+      _myRecorder!.openAudioSession();
     });
   }
 
   Future<void> init() async {
-
     PermissionStatus micStatus =  await Permission.microphone.request();
     if(micStatus != PermissionStatus.granted) {
       throw RecordingPermissionException("Microphone permission not granted");
@@ -69,7 +62,6 @@ class _AudioRecorderState extends State<AudioRecorder> {
     if(storageStatus != PermissionStatus.granted) {
       throw RecordingPermissionException("Storage permission not granted");
     }
-   
   }
 
   @override
@@ -79,7 +71,6 @@ class _AudioRecorderState extends State<AudioRecorder> {
     if(_myRecorder != null) {
       _myRecorder!.closeAudioSession();
     }
-
     if(_recorderSubscription != null) {
       _recorderSubscription!.cancel();
       _recorderSubscription = null;
@@ -124,7 +115,6 @@ class _AudioRecorderState extends State<AudioRecorder> {
                 Center(
                   child: AudioText(txt: _recorderTxt,fontsize: 50)
                 ),
-                 AudioText(txt: _decibel.toString(),fontsize: 20),
                 Center(
                   child: Container(
                     color: Colors.transparent,
@@ -135,12 +125,12 @@ class _AudioRecorderState extends State<AudioRecorder> {
                           ChewieAudio(controller: _chewieController!) 
                           : 
                           (audioStatus != Status.running)?
-                            SoundWave(activate: false, decibel: 1,)
+                            SoundWave(activate: false, decibel: 1,width: 200,height: 200,)
                             :
                             SoundWave(activate:true, decibel: _decibel,),
                       ),
                   ),
-                ),//,ChewieAudio(controller: _chewieController!),
+                ),
                 Align(
                   alignment: Alignment.bottomCenter,
                   child: RecordingButton(
@@ -172,15 +162,12 @@ class _AudioRecorderState extends State<AudioRecorder> {
 
     initializeDateFormatting();
 
+    // recorder listener
     _recorderSubscription = _myRecorder!.onProgress!.listen((e) {
-      
       var date = DateTime.fromMillisecondsSinceEpoch(e.duration.inMilliseconds, isUtc: true);
-
       var txt = DateFormat('mm:ss', 'en_GB').format(date);
       
-
       setState(() {
-        //print('decibel => $_decibel');
         _recorderTxt = txt.substring(0, 5);
         _decibel = e.decibels??0;
       });
@@ -188,7 +175,6 @@ class _AudioRecorderState extends State<AudioRecorder> {
   }  
 
   Future<String?> stopRecording() async {
-
     String? anURL = await _myRecorder!.stopRecorder();
 
     if (_recorderSubscription != null)
@@ -196,24 +182,20 @@ class _AudioRecorderState extends State<AudioRecorder> {
       _recorderSubscription!.cancel();
       _recorderSubscription = null;
     }
-
     _controller = VideoPlayerController.file(File(filePath));
     
     return anURL;
   }
 
   Future<void> onRecordTap(bool val) async {
-
-      if(audioStatus == Status.none || audioStatus == Status.stopped){
-        await startRecording();
-      }
-      else if(audioStatus == Status.running) {
-        await stopRecording();
-      }
+    if(audioStatus == Status.none || audioStatus == Status.stopped){
+      await startRecording();
+    }
+    else if(audioStatus == Status.running) {
+      await stopRecording();
+    }
 
     setState(() {
-//      _on = val;
-
       if(audioStatus == Status.none || audioStatus == Status.stopped){
         statusChange(Status.running);
       }
@@ -237,8 +219,6 @@ class _AudioRecorderState extends State<AudioRecorder> {
           _chewieController!.dispose();
           _chewieController = null;
         }
-        // back to previous page
-
         break;
       case Status.running:
         // on recording
@@ -250,7 +230,6 @@ class _AudioRecorderState extends State<AudioRecorder> {
           _chewieController!.dispose();
           _chewieController = null;
         }
-
         break;
       case Status.stopped:
         // After recordint
@@ -264,7 +243,6 @@ class _AudioRecorderState extends State<AudioRecorder> {
           autoPlay: false,
           looping: false,
         );
-
         break;
       default:
         null;
