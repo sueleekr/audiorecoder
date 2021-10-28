@@ -3,6 +3,7 @@
 
 import 'dart:async';
 import 'dart:io';
+import 'package:audiorecoder/widgets/soundwave.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:intl/intl.dart' show DateFormat; 
 import 'package:path/path.dart' as path;
@@ -123,21 +124,22 @@ class _AudioRecorderState extends State<AudioRecorder> {
                 Center(
                   child: AudioText(txt: _recorderTxt,fontsize: 50)
                 ),
-                SizedBox(
-                  height: 500,
-                  child: 
-                    Center(
-                      child: _chewieController != null ? 
-                        ChewieAudio(controller: _chewieController!) 
-                        : 
-                        Center(
-                          child: 
-                            (audioStatus != Status.running)?
-                              AudioText(txt: 'Wave~~~~start', fontsize: 30,)
-                              :
-                              AudioText(txt: _decibel.toString(), fontsize: 30,)
-                        ),
-                    ),
+                 AudioText(txt: _decibel.toString(),fontsize: 20),
+                Center(
+                  child: Container(
+                    color: Colors.transparent,
+                    height: 500,
+                    child: 
+                      Center(
+                        child: _chewieController != null ? 
+                          ChewieAudio(controller: _chewieController!) 
+                          : 
+                          (audioStatus != Status.running)?
+                            SoundWave(activate: false, decibel: 1,)
+                            :
+                            SoundWave(activate:true, decibel: _decibel,),
+                      ),
+                  ),
                 ),//,ChewieAudio(controller: _chewieController!),
                 Align(
                   alignment: Alignment.bottomCenter,
@@ -166,7 +168,7 @@ class _AudioRecorderState extends State<AudioRecorder> {
       codec: Codec.pcm16WAV,
     );
 
-    await _myRecorder!.setSubscriptionDuration(const Duration(milliseconds: 50));
+    await _myRecorder!.setSubscriptionDuration(const Duration(milliseconds: 500));
 
     initializeDateFormatting();
 
@@ -175,11 +177,12 @@ class _AudioRecorderState extends State<AudioRecorder> {
       var date = DateTime.fromMillisecondsSinceEpoch(e.duration.inMilliseconds, isUtc: true);
 
       var txt = DateFormat('mm:ss', 'en_GB').format(date);
-      _decibel = e.decibels!;
+      
 
       setState(() {
-        print('decibel => $_decibel');
+        //print('decibel => $_decibel');
         _recorderTxt = txt.substring(0, 5);
+        _decibel = e.decibels??0;
       });
     });
   }  
