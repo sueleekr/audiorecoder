@@ -102,7 +102,6 @@ class _AudioRecorderState extends State<AudioRecorder> {
         child: Center(
           child: Column(
             children: [
-              //TimerView(recording: _on,timeviewController: timerController,),
               SizedBox(
                 height: 50,
                 child: Row(
@@ -139,7 +138,7 @@ class _AudioRecorderState extends State<AudioRecorder> {
                         ChewieAudio(controller: _chewieController!)
                         :
                         (_audioStatus != Status.running)?
-                          const SoundWave(activate: false, decibel: 1,width: 200,height: 200,)
+                          const SoundWave(activate: false, decibel: 1,width: 150,height: 150,)
                           :
                           SoundWave(activate:true, decibel: _decibel,),
                     ),
