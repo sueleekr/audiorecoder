@@ -3,20 +3,19 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 
 class RecordingButton extends StatefulWidget {
-  RecordingButton({Key? key, this.onTap}) : super(key: key);
-  
-  final ValueChanged<bool>? onTap;
+  const RecordingButton({
+    Key? key,
+    this.onTap
+  }) : super(key: key);
 
+  final ValueChanged<bool>? onTap;
 
   @override
   _RecordingButtonState createState() => _RecordingButtonState();
 }
 
 class _RecordingButtonState extends State<RecordingButton>  with SingleTickerProviderStateMixin {
-  
-
   late AnimationController animationController;
-
 
   @override
   void initState() {
@@ -29,13 +28,23 @@ class _RecordingButtonState extends State<RecordingButton>  with SingleTickerPro
     );
   }
 
+  @override
+  void dispose() {
+    animationController.dispose();
+    super.dispose();
+  }
+
   toggleAnimation() {
     if(animationController.isCompleted) {
       animationController.reverse();
-      if(widget.onTap!=null) widget.onTap!(false);
+      if(widget.onTap != null) {
+        widget.onTap!(false);
+      }
     } else {
       animationController.forward();
-      if(widget.onTap!=null) widget.onTap!(true);
+      if(widget.onTap!=null) {
+        widget.onTap!(true);
+      }
     }
   }
 

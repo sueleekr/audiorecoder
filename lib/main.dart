@@ -1,9 +1,10 @@
-//import 'package:ecoaudio/pages/audioplayer.dart';
-
 import 'package:audiorecoder/pages/audiorecoder.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/date_symbol_data_local.dart';
 
 void main() {
+  initializeDateFormatting();
+
   runApp(const MyApp());
 }
 
@@ -19,8 +20,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      home:  AudioRecorder(),
+      home: const AudioRecorder(filePath: '/sdcard/Download/temp1.aac'),
     );
   }
 }
-

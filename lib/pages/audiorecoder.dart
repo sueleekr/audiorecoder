@@ -1,55 +1,69 @@
 
 import 'dart:async';
 import 'dart:io';
-import 'package:audiorecoder/widgets/soundwave.dart';
-import 'package:intl/date_symbol_data_local.dart';
-import 'package:intl/intl.dart' show DateFormat; 
-import 'package:path/path.dart' as path;
-
-import 'package:audiorecoder/widgets/recordingbutton.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_sound/flutter_sound.dart';
+import 'package:audiorecoder/widgets/recordingbutton.dart';
+import 'package:audiorecoder/widgets/soundwave.dart';
 import 'package:chewie_audio/chewie_audio.dart';
+import 'package:flutter_sound/flutter_sound.dart';
+import 'package:intl/intl.dart' show DateFormat;
+import 'package:path/path.dart' as path;
 import 'package:permission_handler/permission_handler.dart';
 import 'package:video_player/video_player.dart';
 
-enum Status { 
-   none,          //before recording
-   running,       //recording
-   stopped,       //recording stopped
+enum Status {
+  none,          //before recording
+  running,       //recording
+  stopped,       //recording stopped
 }
 
 class AudioRecorder extends StatefulWidget {
-  const AudioRecorder({Key? key}) : super(key: key);
+  final String filePath;
+
+  const AudioRecorder({
+    Key? key,
+    required this.filePath
+  }) : super(key: key);
 
   @override
   _AudioRecorderState createState() => _AudioRecorderState();
 }
 
 class _AudioRecorderState extends State<AudioRecorder> {
-  Status audioStatus = Status.none;
+  late VideoPlayerController _controller;
+  ChewieAudioController? _chewieController;
+  FlutterSoundRecorder? _myRecorder;
+  StreamSubscription? _recorderSubscription;
+  Status _audioStatus = Status.none;
   String _headerLeftMenuTitle = 'Back';
   String _headerRightMenuTitle = '';
   String _recorderTxt = '00:00';
-  //bool _on = false;   //only if using timer widget
   double _decibel = 0.0;
-  FlutterSoundRecorder? _myRecorder;
-  StreamSubscription? _recorderSubscription;
+  Map<String,dynamic>? error;
 
-  late String filePath;
-  late VideoPlayerController _controller;
-  ChewieAudioController? _chewieController;
+  // Getters
+  String get filePath => widget.filePath;
 
   @override
   void initState() {
     super.initState();
 
-    filePath = '/sdcard/Download/temp1.wav';
     _myRecorder = FlutterSoundRecorder();
 
+   try {
     init().then((value) {
       _myRecorder!.openAudioSession();
     });
+   } catch(e) {
+     setState(() {
+       error = {
+         'type': 'permission',
+         'message': (e is RecordingPermissionException || e is RecordingPermissionException) ?
+            e.message :
+            'Something went wrong'
+       };
+     });
+   }
   }
 
   Future<void> init() async {
@@ -57,7 +71,7 @@ class _AudioRecorderState extends State<AudioRecorder> {
     if(micStatus != PermissionStatus.granted) {
       throw RecordingPermissionException("Microphone permission not granted");
     }
- 
+
     PermissionStatus storageStatus =  await Permission.storage.request();
     if(storageStatus != PermissionStatus.granted) {
       throw RecordingPermissionException("Storage permission not granted");
@@ -83,66 +97,66 @@ class _AudioRecorderState extends State<AudioRecorder> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.black,
-      body: 
-        Padding(padding: EdgeInsets.all(30),
-          child: Center(
-            child: Column(
-              children: [
-                //TimerView(recording: _on,timeviewController: timerController,),
-                SizedBox(
-                  height: 50,
-                  child: Row(
-                    children: [
-                      TextButton(
-                        onPressed: (){
-                          // previous page
-                        }, 
-                        child: AudioText(txt: _headerLeftMenuTitle,)
-                      ),
-                      Expanded(
-                        child: Align(
-                          alignment: Alignment.centerRight,
-                          child: TextButton(
-                            onPressed: (){//Save
-                            }, 
-                            child: AudioText(txt: _headerRightMenuTitle)
-                          ),
+      body: Padding(
+        padding: const EdgeInsets.all(30),
+        child: Center(
+          child: Column(
+            children: [
+              //TimerView(recording: _on,timeviewController: timerController,),
+              SizedBox(
+                height: 50,
+                child: Row(
+                  children: [
+                    TextButton(
+                      onPressed: (){
+                        // previous page
+                      },
+                      child: AudioText(txt: _headerLeftMenuTitle,)
+                    ),
+                    Expanded(
+                      child: Align(
+                        alignment: Alignment.centerRight,
+                        child: TextButton(
+                          onPressed: (){//Save
+                          },
+                          child: AudioText(txt: _headerRightMenuTitle)
                         ),
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
-                Center(
-                  child: AudioText(txt: _recorderTxt,fontsize: 50)
+              ),
+              Center(
+                child: AudioText(txt: _recorderTxt, fontsize: 50)
+              ),
+              Center(
+                child: Container(
+                  color: Colors.transparent,
+                  height: 500,
+                  child:
+                    Center(
+                      child: _chewieController != null ?
+                        ChewieAudio(controller: _chewieController!)
+                        :
+                        (_audioStatus != Status.running)?
+                          const SoundWave(activate: false, decibel: 1,width: 200,height: 200,)
+                          :
+                          SoundWave(activate:true, decibel: _decibel,),
+                    ),
                 ),
-                Center(
-                  child: Container(
-                    color: Colors.transparent,
-                    height: 500,
-                    child: 
-                      Center(
-                        child: _chewieController != null ? 
-                          ChewieAudio(controller: _chewieController!) 
-                          : 
-                          (audioStatus != Status.running)?
-                            SoundWave(activate: false, decibel: 1,width: 200,height: 200,)
-                            :
-                            SoundWave(activate:true, decibel: _decibel,),
-                      ),
-                  ),
+              ),
+              if(error != null)
+              Text(error!['message'] as String, style: const TextStyle(color: Colors.white)),
+              Align(
+                alignment: Alignment.bottomCenter,
+                child: RecordingButton(
+                  onTap:(val) => onRecordTap(val)
                 ),
-                Align(
-                  alignment: Alignment.bottomCenter,
-                  child: RecordingButton(
-                    onTap:(val)=> onRecordTap(val)
-                  ),
-                )
-              ],
-            ),
+              )
+            ],
           ),
-
-        )
-      ,
+        ),
+      )
     );
   }
 
@@ -155,51 +169,48 @@ class _AudioRecorderState extends State<AudioRecorder> {
 
     await _myRecorder!.startRecorder(
       toFile: filePath,
-      codec: Codec.pcm16WAV,
+      codec: Codec.aacADTS,
     );
 
-    await _myRecorder!.setSubscriptionDuration(const Duration(milliseconds: 500));
-
-    initializeDateFormatting();
+    await _myRecorder!.setSubscriptionDuration(const Duration(milliseconds: 200));
 
     // recorder listener
     _recorderSubscription = _myRecorder!.onProgress!.listen((e) {
       var date = DateTime.fromMillisecondsSinceEpoch(e.duration.inMilliseconds, isUtc: true);
       var txt = DateFormat('mm:ss', 'en_GB').format(date);
-      
+
       setState(() {
         _recorderTxt = txt.substring(0, 5);
         _decibel = e.decibels??0;
       });
     });
-  }  
+  }
 
   Future<String?> stopRecording() async {
     String? anURL = await _myRecorder!.stopRecorder();
 
-    if (_recorderSubscription != null)
-    {
+    if (_recorderSubscription != null) {
       _recorderSubscription!.cancel();
       _recorderSubscription = null;
     }
     _controller = VideoPlayerController.file(File(filePath));
-    
+
     return anURL;
   }
 
   Future<void> onRecordTap(bool val) async {
-    if(audioStatus == Status.none || audioStatus == Status.stopped){
+    if(_audioStatus == Status.none || _audioStatus == Status.stopped) {
       await startRecording();
     }
-    else if(audioStatus == Status.running) {
+    else if(_audioStatus == Status.running) {
       await stopRecording();
     }
 
     setState(() {
-      if(audioStatus == Status.none || audioStatus == Status.stopped){
+      if(_audioStatus == Status.none || _audioStatus == Status.stopped) {
         statusChange(Status.running);
       }
-      else if(audioStatus == Status.running) {
+      else if(_audioStatus == Status.running) {
         statusChange(Status.stopped);
       }
     });
@@ -207,33 +218,33 @@ class _AudioRecorderState extends State<AudioRecorder> {
 
   void statusChange(Status status){
     switch (status) {
-      case Status.none: 
+      case Status.none:
         // before recording || reset
-        audioStatus = Status.none;
+        _audioStatus = Status.none;
         _headerLeftMenuTitle = 'Back';
         _headerRightMenuTitle = '';
         _recorderTxt = '00:00';
         _decibel = 0.0;
 
-        if(_chewieController != null){
+        if(_chewieController != null) {
           _chewieController!.dispose();
           _chewieController = null;
         }
         break;
       case Status.running:
         // on recording
-        audioStatus = Status.running;
+        _audioStatus = Status.running;
         _headerLeftMenuTitle = '';
         _headerRightMenuTitle = '';
 
-        if(_chewieController != null){
+        if(_chewieController != null) {
           _chewieController!.dispose();
           _chewieController = null;
         }
         break;
       case Status.stopped:
         // After recordint
-        audioStatus = Status.stopped;
+        _audioStatus = Status.stopped;
         _headerLeftMenuTitle = 'Cancel';
         _headerRightMenuTitle = 'Save';
 
@@ -251,13 +262,19 @@ class _AudioRecorderState extends State<AudioRecorder> {
 }
 
 class AudioText extends StatefulWidget {
-  AudioText({Key? key, required this.txt, this.fontsize = 15, this.color = Colors.white, this.fontweight = FontWeight.bold, }) : super(key: key);
+  const AudioText({
+    Key? key,
+    required this.txt,
+    this.fontsize = 15,
+    this.color = Colors.white,
+    this.fontweight = FontWeight.bold
+  }) : super(key: key);
 
   final String txt;
   final Color color;
   final double fontsize;
   final FontWeight fontweight;
-  
+
   @override
   _AudioTextState createState() => _AudioTextState();
 }
